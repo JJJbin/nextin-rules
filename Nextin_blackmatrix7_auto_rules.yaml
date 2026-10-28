@@ -1,0 +1,115 @@
+# Nextin subscription-template for existing proxy subscriptions.
+# Rule source: https://github.com/blackmatrix7/ios_rule_script
+# Rules fetched by Mihomo rule-providers when supported by the Nextin runtime.
+# Do not put your private subscription URL or tokens in this public template.
+
+x-nextin:
+  version: 1
+  mode: subscription-template
+
+# Nextin replaces this empty list with nodes from the selected subscription.
+proxies: []
+
+proxy-groups:
+  - name: "节点选择"
+    type: select
+    proxies:
+      - "自动选择"
+      - DIRECT
+
+  - name: "自动选择"
+    type: url-test
+    include-all-proxies: true
+    filter: ".*"
+    url: "https://www.gstatic.com/generate_204"
+    interval: 300
+
+# Every remote ruleset uses the blackmatrix7 Clash "classical" YAML format.
+# 86400 seconds = 24 hours. Actual updating depends on Nextin support and connectivity.
+rule-providers:
+  DingTalk:
+    type: http
+    behavior: classical
+    format: yaml
+    path: ./ruleset/bm7_DingTalk.yaml
+    url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/DingTalk/DingTalk.yaml"
+    interval: 86400
+    proxy: "节点选择"
+
+  OpenAI:
+    type: http
+    behavior: classical
+    format: yaml
+    path: ./ruleset/bm7_OpenAI.yaml
+    url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/OpenAI/OpenAI.yaml"
+    interval: 86400
+    proxy: "节点选择"
+
+  Claude:
+    type: http
+    behavior: classical
+    format: yaml
+    path: ./ruleset/bm7_Claude.yaml
+    url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Claude/Claude.yaml"
+    interval: 86400
+    proxy: "节点选择"
+
+  Google:
+    type: http
+    behavior: classical
+    format: yaml
+    path: ./ruleset/bm7_Google.yaml
+    url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Google/Google.yaml"
+    interval: 86400
+    proxy: "节点选择"
+
+  GitHub:
+    type: http
+    behavior: classical
+    format: yaml
+    path: ./ruleset/bm7_GitHub.yaml
+    url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/GitHub/GitHub.yaml"
+    interval: 86400
+    proxy: "节点选择"
+
+  China:
+    type: http
+    behavior: classical
+    format: yaml
+    path: ./ruleset/bm7_China_Classical.yaml
+    url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/China/China_Classical.yaml"
+    interval: 86400
+    proxy: "节点选择"
+
+rules:
+  # Local device / company networks: direct. Not all corporate VPN scenarios are covered.
+  - "DOMAIN-SUFFIX,localhost,DIRECT"
+  - "DOMAIN-SUFFIX,local,DIRECT"
+  - "DOMAIN-SUFFIX,lan,DIRECT"
+  - "DOMAIN-SUFFIX,internal,DIRECT"
+  - "IP-CIDR,127.0.0.0/8,DIRECT,no-resolve"
+  - "IP-CIDR,10.0.0.0/8,DIRECT,no-resolve"
+  - "IP-CIDR,172.16.0.0/12,DIRECT,no-resolve"
+  - "IP-CIDR,192.168.0.0/16,DIRECT,no-resolve"
+  - "IP-CIDR,169.254.0.0/16,DIRECT,no-resolve"
+  - "IP-CIDR6,::1/128,DIRECT,no-resolve"
+  - "IP-CIDR6,fc00::/7,DIRECT,no-resolve"
+  - "IP-CIDR6,fe80::/10,DIRECT,no-resolve"
+
+  # DingTalk: direct first, before the wider China rules.
+  - "DOMAIN-SUFFIX,dingtalk.com,DIRECT"
+  - "DOMAIN-SUFFIX,dingtalk.cn,DIRECT"
+  - "RULE-SET,DingTalk,DIRECT"
+
+  # Services that should explicitly use proxy.
+  - "RULE-SET,OpenAI,节点选择"
+  - "RULE-SET,Claude,节点选择"
+  - "RULE-SET,Google,节点选择"
+  - "RULE-SET,GitHub,节点选择"
+
+  # China mainland domain/IP rules: direct.
+  - "RULE-SET,China,DIRECT"
+  - "GEOIP,CN,DIRECT"
+
+  # Default: use proxy. Change this to MATCH,DIRECT if needed.
+  - "MATCH,节点选择"
